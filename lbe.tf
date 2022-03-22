@@ -1,3 +1,7 @@
+data "azurerm_public_ip" "pip_k8s" {
+  name                = var.cluster_public_ip
+  resource_group_name = var.connectivity_resource_group_name
+}
 
 resource "azurerm_lb" "lbe_k8s" {
   name                = "lbe-k8s"
