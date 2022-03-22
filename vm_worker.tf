@@ -39,12 +39,16 @@ locals {
       subnet_cidr                  = var.subnet_cidr
       k8s_service_subnet           = var.k8s_service_subnet
       cluster_dns                  = var.cluster_dns
+      pod_subnet_cidr              = var.pods_cidr
     }))
-    manifests_kube_addon_manager    = base64gzip(file("modules/kubeadm/resources/manifests/kube-addon-manager.yaml"))
-    addons_coredns = base64gzip(templatefile("modules/kubeadm/resources/addons/coredns.yaml", {
-      cluster_dns = var.cluster_dns
+    configs_calico = base64gzip(templatefile("resources/configs/calico.yaml", {
+      calico_ipv4pool_cidr         = var.pods_cidr
     }))
-    addons_kube_proxy          = base64gzip(file("modules/kubeadm/resources/addons/kube-proxy.yaml"))
+    # manifests_kube_addon_manager    = base64gzip(file("modules/kubeadm/resources/manifests/kube-addon-manager.yaml"))
+    # addons_coredns = base64gzip(templatefile("modules/kubeadm/resources/addons/coredns.yaml", {
+    #   cluster_dns = var.cluster_dns
+    # }))
+    # addons_kube_proxy          = base64gzip(file("modules/kubeadm/resources/addons/kube-proxy.yaml"))
   }))
 }
 
