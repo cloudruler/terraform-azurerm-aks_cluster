@@ -99,5 +99,5 @@ controller-manager "http://127.0.0.1:10252/healthz" connection refused
 dig is the gold standard for debugging DNS
 dig -p 1053 @localhost +noall +answer <name> <type>
 
- wget https://training.linuxfoundation.org/cm/LFS258/LFS258_V2022-03-22_SOLUTIONS.tar.xz --user=LFtraining --password=Penguin2014
+wget https://training.linuxfoundation.org/cm/LFS258/LFS258_V2022-03-22_SOLUTIONS.tar.xz --user=LFtraining --password=Penguin2014
 tar -xvf LFS258_V2022-03-22_SOLUTIONS.tar.xz
