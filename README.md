@@ -66,6 +66,17 @@ sudo cat /var/lib/kubelet/config.yaml
 
 /var/lib/etcd
 
+
+Create and use a Discovery Token CA Cert Hash created from the cp to ensure the node joins the cluster in a secure
+manner. Run this on the cp node or wherever you have a copy of the CA file. You will get a long string as output. Also
+note that a copy and paste from a PDF sometimes has issues with the caret (ˆ) and the single quote (’) found at the end
+of the command.
+student@cp:˜$ openssl x509 -pubkey \
+-in /etc/kubernetes/pki/ca.crt | openssl rsa \
+-pubin -outform der 2>/dev/null | openssl dgst \
+-sha256 -hex | sed 's/ˆ.* //'
+
+
   client-certificate: /var/lib/kubelet/pki/kubelet-client-current.pem
   client-key: /var/lib/kubelet/pki/kubelet-client-current.pem
 
