@@ -116,23 +116,23 @@ resource "azurerm_lb_backend_address_pool" "lbe_bep_k8s_master" {
   loadbalancer_id = azurerm_lb.lbe_k8s.id
 }
 
-# resource "azurerm_network_interface_backend_address_pool_association" "lb_bep_k8s_nic_master" {
-#   count                   = length(var.master_nodes_config)
-#   network_interface_id    = azurerm_network_interface.nic_k8s_master[count.index].id
-#   ip_configuration_name   = "internal-${count.index}"
-#   backend_address_pool_id = azurerm_lb_backend_address_pool.lbe_bep_k8s_master.id
-# }
-
-resource "azurerm_lb_nat_rule" "lb_nat_k8s_master" {
-  count                          = length(var.master_nodes_config)
-  resource_group_name            = var.resource_group_name
-  loadbalancer_id                = azurerm_lb.lbe_k8s.id
-  name                           = "nat-ssh-master-${count.index}"
-  protocol                       = "Tcp"
-  frontend_port                  = count.index + 1
-  backend_port                   = 22
-  frontend_ip_configuration_name = azurerm_lb.lbe_k8s.frontend_ip_configuration[0].name
+resource "azurerm_network_interface_backend_address_pool_association" "lb_bep_k8s_nic_master" {
+  count                   = length(var.master_nodes_config)
+  network_interface_id    = azurerm_network_interface.nic_k8s_master[count.index].id
+  ip_configuration_name   = "internal-${count.index}"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.lbe_bep_k8s_master.id
 }
+
+# resource "azurerm_lb_nat_rule" "lb_nat_k8s_master" {
+#   count                          = length(var.master_nodes_config)
+#   resource_group_name            = var.resource_group_name
+#   loadbalancer_id                = azurerm_lb.lbe_k8s.id
+#   name                           = "nat-ssh-master-${count.index}"
+#   protocol                       = "Tcp"
+#   frontend_port                  = count.index + 1
+#   backend_port                   = 22
+#   frontend_ip_configuration_name = azurerm_lb.lbe_k8s.frontend_ip_configuration[0].name
+# }
 
 # resource "azurerm_network_interface_nat_rule_association" "nic_k8s_master_lb_nat_k8s_master" {
 #   count                 = length(var.master_nodes_config)
@@ -164,4 +164,13 @@ resource "azurerm_lb_rule" "lbe_k8s_api_rule" {
   backend_address_pool_id        = azurerm_lb_backend_address_pool.lbe_bep_k8s_master.id
   probe_id                       = azurerm_lb_probe.lbe_prb_k8s.id
   disable_outbound_snat          = true
+}
+
+resource "azurerm_private_dns_a_record" "k8s_master" {
+  count               = length(var.master_nodes_config)
+  name                = "k8s-master-${count.index}"
+  zone_name           = azurerm_private_dns_zone.dns.name
+  resource_group_name = var.resource_group_name
+  ttl                 = 300
+  records             = [azurerm_linux_virtual_machine.vm_k8s_master[count.index].private_ip_address]
 }
