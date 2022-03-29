@@ -112,3 +112,18 @@ dig -p 1053 @localhost +noall +answer <name> <type>
 
 wget https://training.linuxfoundation.org/cm/LFS258/LFS258_V2022-03-22_SOLUTIONS.tar.xz --user=LFtraining --password=Penguin2014
 tar -xvf LFS258_V2022-03-22_SOLUTIONS.tar.xz
+
+
+
+
+######## discovery-token-ca-cert-hash
+If you don't have the value of --discovery-token-ca-cert-hash, you can get it by running the following command chain on the control-plane node:
+
+openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | \
+   openssl dgst -sha256 -hex | sed 's/^.* //'
+   ###
+
+####
+These connections terminate at the kubelet's HTTPS endpoint. By default, the apiserver does not verify the kubelet's serving certificate, which makes the connection subject to man-in-the-middle attacks and unsafe to run over untrusted and/or public networks.
+
+To verify this connection, use the --kubelet-certificate-authority flag to provide the apiserver with a root certificate bundle to use to verify the kubelet's serving certificate.
