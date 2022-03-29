@@ -127,3 +127,42 @@ openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outfor
 These connections terminate at the kubelet's HTTPS endpoint. By default, the apiserver does not verify the kubelet's serving certificate, which makes the connection subject to man-in-the-middle attacks and unsafe to run over untrusted and/or public networks.
 
 To verify this connection, use the --kubelet-certificate-authority flag to provide the apiserver with a root certificate bundle to use to verify the kubelet's serving certificate.
+========================
+
+sudo su
+CRIO_VERSION=1.23
+CRIO_OS_VERSION=xUbuntu_20.04
+ADMIN_USERNAME=cloudruleradmin
+modprobe overlay
+modprobe br_netfilter
+sysctl --system
+echo "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$CRIO_VERSION/$CRIO_OS_VERSION/ /" | tee -a /etc/apt/sources.list.d/cri-0.list
+curl -L http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$CRIO_VERSION/$CRIO_OS_VERSION/Release.key | apt-key add -
+echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$CRIO_OS_VERSION/ /" | tee -a /etc/apt/sources.list.d/libcontainers.list
+curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$CRIO_OS_VERSION/Release.key | apt-key add -
+echo deb https://apt.kubernetes.io/ kubernetes-xenial main | tee -a /etc/apt/sources.list.d/kubernetes.list
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+apt-get update
+
+apt-get install -y cri-o cri-o-runc
+systemctl daemon-reload
+systemctl enable crio
+systemctl start crio
+apt-get install -y kubelet=1.22.1-00 kubeadm=1.22.1-00 kubectl=1.22.1-00
+apt-mark hold kubelet kubeadm kubectl
+
+#If this is a master node, grab the certs we need
+mkdir -p /etc/kubernetes/pki/etcd
+cp /var/lib/waagent/${certificates["ca-kubernetes"]}.crt /etc/kubernetes/pki/ca.crt
+cp /var/lib/waagent/${certificates["ca-kubernetes"]}.prv /etc/kubernetes/pki/ca.key
+cp /var/lib/waagent/${certificates["ca-etcd"]}.crt /etc/kubernetes/pki/etcd/ca.crt
+cp /var/lib/waagent/${certificates["ca-etcd"]}.prv /etc/kubernetes/pki/etcd/ca.key
+cp /var/lib/waagent/${certificates["ca-kubernetes-front-proxy"]}.crt /etc/kubernetes/pki/front-proxy-ca.crt
+cp /var/lib/waagent/${certificates["ca-kubernetes-front-proxy"]}.prv /etc/kubernetes/pki/front-proxy-ca.key
+
+#Initialize the cluster
+kubeadm init --config /etc/kubeadm/config.yaml --upload-certs
+mkdir -p /home/$ADMIN_USERNAME/.kube
+cp /etc/kubernetes/admin.conf /home/$ADMIN_USERNAME/.kube/config
+chown $ADMIN_USERNAME:$ADMIN_USERNAME /home/$ADMIN_USERNAME/.kube/config
+kubectl apply -f /tmp/calico.yaml
