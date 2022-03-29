@@ -24,25 +24,23 @@ resource "azurerm_network_interface" "nic_k8s_master" {
 }
 
 locals {
-  master_custom_data = base64gzip(templatefile(var.master_custom_data_template, {
+  master_custom_data = base64gzip(templatefile("${var.resources_path}/cloud-config.yaml", {
     node_type      = "master"
     admin_username = var.admin_username
-    vnet_cidr      = var.vnet_cidr
     crio_version   = var.crio_version
     crio_os_version = var.crio_os_version
     certificates   = { for cert_name in var.certificate_names : cert_name => data.azurerm_key_vault_certificate.kv_certificate[cert_name].thumbprint }
-    configs_kubeadm = base64gzip(templatefile("resources/configs/kubeadm-config.yaml", {
+    configs_kubeadm = base64gzip(templatefile("${var.resources_path}/configs/kubeadm-config.yaml", {
       node_type                    = "master"
       bootstrap_token              = data.azurerm_key_vault_secret.kv_sc_bootstrap_token.value
       api_server_name              = var.api_server_name
       discovery_token_ca_cert_hash = data.azurerm_key_vault_secret.kv_sc_discovery_token_ca_cert_hash.value
-      subnet_cidr                  = var.subnet_cidr
       k8s_service_subnet           = var.k8s_service_subnet
       cluster_dns                  = var.cluster_dns
       pod_subnet_cidr              = var.pods_cidr
     }))
-    configs_calico = base64gzip(templatefile("resources/configs/calico.yaml", {
-      calico_ipv4pool_cidr         = var.k8s_service_subnet
+    configs_calico = base64gzip(templatefile("${var.resources_path}/configs/calico.yaml", {
+      calico_ipv4pool_cidr         = var.pods_cidr
     }))
     # manifests_kube_addon_manager    = base64gzip(file("resources/manifests/kube-addon-manager.yaml"))
     # addons_coredns = base64gzip(templatefile("resources/addons/coredns.yaml", {

@@ -2,14 +2,6 @@ variable "landing_zone_name" {
   type = string
 }
 
-variable "master_custom_data_template" {
-  type = string
-}
-
-variable "worker_custom_data_template" {
-  type = string
-}
-
 variable "resource_group_name" {
   type = string
 }
@@ -68,7 +60,6 @@ variable "pods_cidr" {
   type = string
 }
 
-
 variable "bootstrap_token_secret_name" {
   type = string
 }
@@ -104,4 +95,8 @@ variable "vm_image_publisher" {
     sku       = string
     version   = string
   })
+}
+
+variable "resources_path" {
+  type = string
 }
