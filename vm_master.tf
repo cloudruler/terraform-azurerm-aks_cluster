@@ -23,15 +23,22 @@ resource "azurerm_network_interface" "nic_k8s_master" {
   }
 }
 
-locals {
-  master_custom_data = base64gzip(templatefile("${var.resources_path}/cloud-config.yaml", {
-    node_type      = "master"
-    admin_username = var.admin_username
-    crio_version   = var.crio_version
+resource "azurerm_linux_virtual_machine" "vm_k8s_master" {
+  count               = length(var.master_nodes_config)
+  name                = "vm-k8s-master-${count.index}"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  size                = "Standard_B2s"
+  custom_data = base64gzip(templatefile("${var.resources_path}/cloud-config.yaml", {
+    node_type       = "master"
+    action          = count.index == 0 ? "init" : "join"
+    admin_username  = var.admin_username
+    crio_version    = var.crio_version
     crio_os_version = var.crio_os_version
-    certificates   = { for cert_name in var.certificate_names : cert_name => data.azurerm_key_vault_certificate.kv_certificate[cert_name].thumbprint }
+    certificates    = { for cert_name in var.certificate_names : cert_name => data.azurerm_key_vault_certificate.kv_certificate[cert_name].thumbprint }
     configs_kubeadm = base64gzip(templatefile("${var.resources_path}/configs/kubeadm-config.yaml", {
       node_type                    = "master"
+      action                       = "master"
       bootstrap_token              = data.azurerm_key_vault_secret.kv_sc_bootstrap_token.value
       api_server_name              = var.api_server_name
       discovery_token_ca_cert_hash = data.azurerm_key_vault_secret.kv_sc_discovery_token_ca_cert_hash.value
@@ -40,7 +47,7 @@ locals {
       pod_subnet_cidr              = var.pods_cidr
     }))
     configs_calico = base64gzip(templatefile("${var.resources_path}/configs/calico.yaml", {
-      calico_ipv4pool_cidr         = var.pods_cidr
+      calico_ipv4pool_cidr = var.pods_cidr
     }))
     # manifests_kube_addon_manager    = base64gzip(file("resources/manifests/kube-addon-manager.yaml"))
     # addons_coredns = base64gzip(templatefile("resources/addons/coredns.yaml", {
@@ -48,16 +55,7 @@ locals {
     # }))
     # addons_kube_proxy          = base64gzip(file("resources/addons/kube-proxy.yaml"))
   }))
-}
-
-resource "azurerm_linux_virtual_machine" "vm_k8s_master" {
-  count               = length(var.master_nodes_config)
-  name                = "vm-k8s-master-${count.index}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  size                = "Standard_B2s"
-  custom_data         = local.master_custom_data
-  admin_username      = var.admin_username
+  admin_username = var.admin_username
   network_interface_ids = [
     azurerm_network_interface.nic_k8s_master[count.index].id,
   ]
@@ -78,7 +76,7 @@ resource "azurerm_linux_virtual_machine" "vm_k8s_master" {
     sku       = var.vm_image_publisher.sku
     version   = var.vm_image_publisher.version
   }
-  
+
   identity {
     type = "SystemAssigned"
   }

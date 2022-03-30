@@ -75,12 +75,19 @@ runcmd:
 - [ cp, /var/lib/waagent/${certificates["ca-etcd"]}.prv, /etc/kubernetes/pki/etcd/ca.key ]
 - [ cp, /var/lib/waagent/${certificates["ca-kubernetes-front-proxy"]}.crt, /etc/kubernetes/pki/front-proxy-ca.crt ]
 - [ cp, /var/lib/waagent/${certificates["ca-kubernetes-front-proxy"]}.prv, /etc/kubernetes/pki/front-proxy-ca.key ]
-#Initialize the cluster
-- [ sh, -c, 'kubeadm init --config /etc/kubeadm/config.yaml --upload-certs' ]
+%{ if action == "init" ~}
+#Initialize the control plane
+- [ sh, -c, 'kubeadm init --config /etc/kubeadm/config.yaml' ]
 - [ mkdir, -p, /home/${admin_username}/.kube ]
 - [ cp, /etc/kubernetes/admin.conf, /home/${admin_username}/.kube/config ]
 - [ chown, '${admin_username}:${admin_username}', /home/${admin_username}/.kube/config ]
 - [ kubectl, apply, -f /tmp/calico.yaml ]
+#If this is a master node but we are doing a join
+%{ else ~}
+#Join the control plane node to the cluster
+- [ sh, -c, 'kubeadm join --config /etc/kubeadm/config.yaml --control-plane']
+%{ endif ~}
+#If this is a worker node
 %{ else ~}
 #Join the worker to the cluster
 - [ sh, -c, 'kubeadm join --config /etc/kubeadm/config.yaml']
