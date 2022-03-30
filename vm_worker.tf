@@ -110,12 +110,3 @@ resource "azurerm_network_interface_application_security_group_association" "asg
   network_interface_id          = azurerm_network_interface.nic_k8s_worker[count.index].id
   application_security_group_id = azurerm_application_security_group.asg_k8s_workers.id
 }
-
-resource "azurerm_private_dns_a_record" "k8s_worker" {
-  count               = length(var.worker_nodes_config)
-  name                = "k8s-worker-${count.index}"
-  zone_name           = azurerm_private_dns_zone.dns.name
-  resource_group_name = var.resource_group_name
-  ttl                 = 300
-  records             = [azurerm_linux_virtual_machine.vm_k8s_worker[count.index].private_ip_address]
-}
