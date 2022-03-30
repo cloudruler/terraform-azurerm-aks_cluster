@@ -13,15 +13,12 @@ localAPIEndpoint:
   bindPort: 6443
 nodeRegistration:
   criSocket: unix:///var/run/crio/crio.sock
-  taints: null
 ---
 kind: ClusterConfiguration
 apiVersion: kubeadm.k8s.io/v1beta2
 controlPlaneEndpoint: ${api_server_name}
 apiServer:
   timeoutForControlPlane: 4m0s
-#   certSANS:
-#     - k8s.cloudruler.com  
 certificatesDir: /etc/kubernetes/pki
 clusterName: kubernetes
 dns:
@@ -77,19 +74,16 @@ authorization:
     cacheAuthorizedTTL: 0s
     cacheUnauthorizedTTL: 0s
 %{ else ~}
-# kind: JoinConfiguration
-# apiVersion: kubeadm.k8s.io/v1beta2
-# discovery:
-#   bootstrapToken:
-#     apiServerEndpoint: ${api_server_name}:6443
-#     token: ${bootstrap_token}
-#     unsafeSkipCAVerification: false
-#     caCertHashes:
-#     - ${discovery_token_ca_cert_hash}
-#   tlsBootstrapToken: ${bootstrap_token}
-# nodeRegistration:
-#   criSocket: unix:///run/containerd/containerd.sock
-#   kubeletExtraArgs:
-#     v: '4'
-#     volume-plugin-dir: /etc/kubernetes/volumeplugins
+kind: JoinConfiguration
+apiVersion: kubeadm.k8s.io/v1beta2
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: ${api_server_name}:6443
+    token: ${bootstrap_token}
+    unsafeSkipCAVerification: false
+    caCertHashes:
+    - ${discovery_token_ca_cert_hash}
+  tlsBootstrapToken: ${bootstrap_token}
+nodeRegistration:
+  criSocket: unix:///var/run/crio/crio.sock
 %{ endif ~}
