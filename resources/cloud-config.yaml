@@ -78,10 +78,12 @@ runcmd:
 %{ if action == "init" ~}
 #Initialize the control plane
 - [ sh, -c, 'kubeadm init --config /etc/kubeadm/config.yaml' ]
+#Install Calico CNI plugin
+- [ kubectl, apply, -f, /tmp/calico.yaml, '--kubeconfig=/etc/kubernetes/admin.conf' ]
+#Set up the admin kubeconfig
 - [ mkdir, -p, /home/${admin_username}/.kube ]
 - [ cp, /etc/kubernetes/admin.conf, /home/${admin_username}/.kube/config ]
 - [ chown, '${admin_username}:${admin_username}', /home/${admin_username}/.kube/config ]
-- [ kubectl, apply, -f /tmp/calico.yaml ]
 #If this is a master node but we are doing a join
 %{ else ~}
 #Join the control plane node to the cluster
