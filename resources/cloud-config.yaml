@@ -63,9 +63,9 @@ runcmd:
 - [ systemctl, daemon-reload ]
 - [ systemctl, enable, crio ]
 - [ systemctl, start, crio ]
-#Install kubernetes
-- [ apt-get, install, -y, kubelet=1.22.1-00, kubeadm=1.22.1-00, kubectl=1.22.1-00 ]
-- [ apt-mark, hold, kubelet, kubeadm, kubectl ]
+#Install kubelet and kubeadm
+- [ apt-get, install, -y, kubelet=1.22.1-00, kubeadm=1.22.1-00 ]
+- [ apt-mark, hold, kubelet, kubeadm ]
 %{ if node_type == "master" ~}
 #If this is a master node, grab the certs we need
 - [ mkdir, -p, /etc/kubernetes/pki/etcd ]
@@ -76,6 +76,9 @@ runcmd:
 - [ cp, /var/lib/waagent/${certificates["ca-kubernetes-front-proxy"]}.crt, /etc/kubernetes/pki/front-proxy-ca.crt ]
 - [ cp, /var/lib/waagent/${certificates["ca-kubernetes-front-proxy"]}.prv, /etc/kubernetes/pki/front-proxy-ca.key ]
 %{ if action == "init" ~}
+#Install kubectl which is only needed on the first master node
+- [ apt-get, install, -y, kubectl=1.22.1-00 ]
+- [ apt-mark, hold, kubectl ]
 #Initialize the control plane
 - [ sh, -c, 'kubeadm init --config /etc/kubeadm/config.yaml' ]
 #Install Calico CNI plugin
@@ -84,6 +87,8 @@ runcmd:
 - [ mkdir, -p, /home/${admin_username}/.kube ]
 - [ cp, /etc/kubernetes/admin.conf, /home/${admin_username}/.kube/config ]
 - [ chown, '${admin_username}:${admin_username}', /home/${admin_username}/.kube/config ]
+#Set up bash completion for the admin user
+- [ sh, -c, 'echo "source <(kubectl completion bash)" | tee -a /home/${admin_username}/.bashrc' ]
 #If this is a master node but we are doing a join
 %{ else ~}
 #Join the control plane node to the cluster

@@ -166,3 +166,13 @@ mkdir -p /home/$ADMIN_USERNAME/.kube
 cp /etc/kubernetes/admin.conf /home/$ADMIN_USERNAME/.kube/config
 chown $ADMIN_USERNAME:$ADMIN_USERNAME /home/$ADMIN_USERNAME/.kube/config
 kubectl apply -f /tmp/calico.yaml
+
+
+===========================
+
+kubectl -n kube-system exec -it etcd-vm-k8s-master-0 -- sh \ #Same as before
+-c "ETCDCTL_API=3 \ #Version to use
+ETCDCTL_CACERT=/etc/kubernetes/pki/etcd/ca.crt \ #Pass the certificate authority
+ETCDCTL_CERT=/etc/kubernetes/pki/etcd/server.crt \ #Pass the peer cert and key
+ETCDCTL_KEY=/etc/kubernetes/pki/etcd/server.key \
+etcdctl endpoint health" #The command to test the endpoint
