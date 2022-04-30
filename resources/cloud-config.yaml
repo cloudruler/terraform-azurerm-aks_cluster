@@ -83,6 +83,9 @@ runcmd:
 - [ sh, -c, 'kubeadm init --config /etc/kubeadm/config.yaml' ]
 #Install Calico CNI plugin
 - [ kubectl, apply, -f, /tmp/calico.yaml, '--kubeconfig=/etc/kubernetes/admin.conf' ]
+- [ wget, https://get.helm.sh/helm-v${helm_version}-linux-amd64.tar.gz ]
+- [ tar, -xvf, helm-v${helm_version}-linux-amd64.tar.gz ]
+- [ cp, linux-amd64/helm, /usr/local/bin/helm ]
 #Set up the admin kubeconfig
 - [ mkdir, -p, /home/${admin_username}/.kube ]
 - [ cp, /etc/kubernetes/admin.conf, /home/${admin_username}/.kube/config ]

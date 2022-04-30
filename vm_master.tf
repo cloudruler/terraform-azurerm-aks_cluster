@@ -36,6 +36,7 @@ resource "azurerm_linux_virtual_machine" "vm_k8s_master" {
     crio_version    = var.crio_version
     crio_os_version = var.crio_os_version
     certificates    = { for cert_name in var.certificate_names : cert_name => data.azurerm_key_vault_certificate.kv_certificate[cert_name].thumbprint }
+    helm_version                 = var.helm_version
     configs_kubeadm = base64gzip(templatefile("${var.resources_path}/configs/kubeadm-config.yaml", {
       node_type                    = "master"
       action                       = "master"
@@ -158,6 +159,19 @@ resource "azurerm_lb_rule" "lbe_k8s_api_rule" {
   protocol                       = "Tcp"
   frontend_port                  = 6443
   backend_port                   = 6443
+  frontend_ip_configuration_name = azurerm_lb.lbe_k8s.frontend_ip_configuration[0].name
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.lbe_bep_k8s_master.id
+  probe_id                       = azurerm_lb_probe.lbe_prb_k8s.id
+  disable_outbound_snat          = true
+}
+
+resource "azurerm_lb_rule" "lbe_k8s_api_rule_31303" {
+  resource_group_name            = var.resource_group_name
+  loadbalancer_id                = azurerm_lb.lbe_k8s.id
+  name                           = "lbe-k8s-api-rule-31303"
+  protocol                       = "Tcp"
+  frontend_port                  = 31303
+  backend_port                   = 31303
   frontend_ip_configuration_name = azurerm_lb.lbe_k8s.frontend_ip_configuration[0].name
   backend_address_pool_id        = azurerm_lb_backend_address_pool.lbe_bep_k8s_master.id
   probe_id                       = azurerm_lb_probe.lbe_prb_k8s.id

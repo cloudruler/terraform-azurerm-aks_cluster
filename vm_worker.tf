@@ -36,6 +36,7 @@ resource "azurerm_linux_virtual_machine" "vm_k8s_worker" {
     crio_version    = var.crio_version
     crio_os_version = var.crio_os_version
     certificates    = { for cert_name in var.certificate_names : cert_name => data.azurerm_key_vault_certificate.kv_certificate[cert_name].thumbprint }
+    helm_version                 = var.helm_version
     configs_kubeadm = base64gzip(templatefile("${var.resources_path}/configs/kubeadm-config.yaml", {
       node_type                    = "worker"
       bootstrap_token              = data.azurerm_key_vault_secret.kv_sc_bootstrap_token.value
